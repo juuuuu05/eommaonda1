@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>엄마 온다!</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#141233; --wall:#221c4d; --blanket:#5b4aa8; --blanket2:#7a68cf; --pillow:#e9e4ff;
+  --light:#ffd45c; --danger:#ff4d5e; --ink:#f4f0ff; --muted:#a9a0d6;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{background:var(--night);color:var(--ink);font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+#app{position:relative;max-width:480px;height:100%;margin:0 auto;display:flex;flex-direction:column;padding:12px 14px 14px;gap:10px}
+.hud{display:flex;justify-content:space-between;align-items:baseline;font-size:22px}
+.hud small{color:var(--muted);font-size:14px;margin-right:6px}
+.bars{display:grid;gap:5px}
+.bar{height:8px;border-radius:6px;background:#2d2760;overflow:hidden}
+.bar>i{display:block;height:100%;width:100%;transform-origin:left;background:var(--blanket2)}
+#react>i{background:var(--light)}
+#react{opacity:.25}#react.on{opacity:1}
+.scene{position:relative;flex:1;min-height:260px;border-radius:18px;overflow:hidden;background:linear-gradient(#1b1745,var(--wall));border:2px solid #342d6e;transition:box-shadow .15s}
+.scene.alert{box-shadow:inset 0 0 40px rgba(255,212,92,.35)}
+.scene.caught{box-shadow:inset 0 0 70px rgba(255,77,94,.7)}
+.moon{position:absolute;left:16px;top:14px;font-size:30px;opacity:.85}
+.floor{position:absolute;left:0;right:0;bottom:0;height:34%;background:#18133a}
+.door{position:absolute;right:14px;top:18px;width:96px;height:160px;border-radius:8px 8px 0 0;background:#0d0b22;border:3px solid #3a3278;overflow:hidden}
+.door::after{content:"";position:absolute;inset:0;background:var(--light);opacity:0;transition:opacity .12s}
+.scene.alert .door::after{opacity:.9}
+.spill{position:absolute;right:14px;top:178px;width:96px;height:0;border-left:0;opacity:0;transition:opacity .12s;background:linear-gradient(rgba(255,212,92,.55),transparent);clip-path:polygon(0 0,100% 0,60% 100%,-90% 100%);height:130px}
+.scene.alert .spill{opacity:1}
+.mom{position:absolute;right:30px;top:62px;font-size:72px;line-height:1;filter:brightness(0) drop-shadow(0 0 6px var(--light));opacity:0;transform:translateX(30px);transition:opacity .15s,transform .25s;z-index:2}
+.scene.alert .mom{opacity:1;transform:none}
+.scene.caught .mom{opacity:1;transform:scale(1.5) translateX(-10px);filter:brightness(0) drop-shadow(0 0 10px var(--danger))}
+.bubble{position:absolute;right:122px;top:30px;background:#fff7d6;color:#3a2a00;padding:6px 12px;border-radius:14px;font-size:20px;opacity:0;transform:scale(.6);transition:opacity .12s,transform .12s;z-index:3}
+.bubble::after{content:"";position:absolute;right:-8px;top:12px;border:8px solid transparent;border-left-color:#fff7d6;border-right:0}
+.scene.alert .bubble,.scene.caught .bubble{opacity:1;transform:scale(1)}
+.scene.alert .bubble{animation:shake .25s infinite}
+@keyframes shake{50%{transform:translateX(-4px) scale(1.05)}}
+.bed{position:absolute;left:10px;right:10px;bottom:16px;height:130px}
+.pillow{position:absolute;left:6px;bottom:44px;width:96px;height:48px;border-radius:24px;background:var(--pillow)}
+.face{position:absolute;left:24px;bottom:56px;font-size:54px;line-height:1;z-index:2}
+.blanket{position:absolute;left:62px;right:0;bottom:0;height:88px;border-radius:30px 18px 18px 18px;background:repeating-linear-gradient(90deg,var(--blanket) 0 34px,var(--blanket2) 34px 38px);border:3px solid #43368a;z-index:3}
+.frame{position:absolute;left:0;right:0;bottom:0;height:34px;border-radius:10px;background:#3b2a1f}
+.zzz{position:absolute;left:92px;bottom:118px;font-size:26px;color:#cfc6ff;opacity:0;z-index:4}
+.sleeping .zzz{animation:zz 1s ease-out}
+@keyframes zz{0%{opacity:0;transform:translateY(10px)}30%{opacity:1}100%{opacity:0;transform:translate(14px,-26px)}}
+.pop{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);font-size:34px;color:var(--light);opacity:0;z-index:5;pointer-events:none}
+.pop.show{animation:pop .6s ease-out}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,-30%)}25%{opacity:1}100%{opacity:0;transform:translate(-50%,-110%)}}
+#btn{font-family:inherit;font-size:28px;padding:20px;border:0;border-radius:18px;background:var(--light);color:#2b2000;box-shadow:0 6px 0 #b48a12;cursor:pointer;touch-action:manipulation}
+#btn:active{transform:translateY(4px);box-shadow:0 2px 0 #b48a12}
+#btn:focus-visible,.cta:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.overlay{position:absolute;inset:0;background:rgba(14,12,36,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;gap:14px;z-index:10;border-radius:0}
+.overlay.hide{display:none}
+.overlay h1{font-size:46px;margin:0;color:var(--light)}
+.overlay h2{font-size:34px;margin:0}
+.overlay p{margin:0;color:var(--muted);font-size:18px;line-height:1.5;max-width:320px}
+.grade{font-size:56px;color:var(--light);line-height:1.1}
+.big{font-size:26px}
+.cta{font-family:inherit;font-size:26px;padding:14px 36px;border:0;border-radius:16px;background:var(--light);color:#2b2000;box-shadow:0 5px 0 #b48a12;cursor:pointer;margin-top:6px}
+.scene{min-height:300px}
+.floor{height:36%;background:linear-gradient(#1e1844,#150f33);border-top:3px solid #2d2562}
+.window{position:absolute;left:84px;top:34px;width:76px;height:70px;border-radius:6px;border:4px solid #4a3f8f;background:radial-gradient(circle at 20% 30%,#fff 1px,transparent 2px),radial-gradient(circle at 38% 72%,#fff 1px,transparent 2px),radial-gradient(circle at 78% 62%,#fff 1px,transparent 2px),linear-gradient(#0b0a24,#1c1a50)}
+.window::before{content:"🌙";position:absolute;right:6px;top:4px;font-size:22px}
+.window::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:3px;margin-left:-1px;background:#4a3f8f}
+.poster{position:absolute;left:176px;top:42px;width:34px;height:44px;border-radius:3px;background:#3a2d73;border:2px solid #5b4aa8;font-size:18px;display:flex;align-items:center;justify-content:center}
+.wardrobe{position:absolute;left:8px;bottom:36%;width:66px;height:150px;background:#4a3326;border:3px solid #2e1f17;border-radius:6px 6px 0 0}
+.wardrobe::before{content:"";position:absolute;left:50%;top:6px;bottom:6px;width:2px;background:#2e1f17}
+.wardrobe::after{content:"";position:absolute;left:calc(50% - 10px);top:46%;width:5px;height:16px;border-radius:3px;background:#d9b46a;box-shadow:15px 0 #d9b46a}
+.desk{position:absolute;left:86px;bottom:calc(36% + 46px);width:104px;height:8px;border-radius:3px;background:#7a5640}
+.desk::before,.desk::after{content:"";position:absolute;top:8px;width:7px;height:46px;background:#4a3326}
+.desk::before{left:8px}.desk::after{right:8px}
+.lamp,.books,.laptop{position:absolute;bottom:calc(36% + 54px);line-height:1;font-size:26px}
+.lamp{left:92px;font-size:30px;filter:drop-shadow(0 0 8px rgba(255,212,92,.8))}
+.books{left:126px}.laptop{left:154px;opacity:.9}
+.door{top:auto;bottom:36%}
+.spill{top:auto;bottom:calc(36% - 100px);height:100px}
+.mom{top:auto;bottom:calc(36% + 2px);transform-origin:50% 100%}
+.bubble{right:22px;top:auto;bottom:calc(36% + 90px);background:#fff;border:2px solid #3a2a00}
+.bubble::after{right:auto;left:50%;top:auto;bottom:-10px;margin-left:-8px;border:8px solid transparent;border-top-color:#fff;border-bottom:0}
+.bed{height:120px;bottom:12px}
+.pillow{left:8px;bottom:34px;width:100px;height:56px;border-radius:28px;background:#efeaff;box-shadow:inset 0 -6px 0 #cfc7f3}
+.face{left:30px;bottom:50px}
+.hair{position:absolute;left:28px;bottom:86px;width:58px;height:28px;border-radius:30px 30px 6px 6px;background:#2a1d40;z-index:3}
+.blanket{left:50px;height:72px;border-radius:26px 20px 20px 20px;background:radial-gradient(circle,rgba(255,255,255,.14) 2px,transparent 3px) 0 0/22px 22px,var(--blanket)}
+.blanket::before{content:"";position:absolute;left:0;top:0;width:34%;height:14px;background:#efeaff;border-radius:23px 0 0 0}
+.hump{position:absolute;left:46%;bottom:56px;width:30%;height:44px;border-radius:50% 50% 0 0;background:var(--blanket);border:3px solid #43368a;border-bottom:0;z-index:3}
+.hump.feet{left:76%;width:20%;height:30px}
+.bed{height:130px}
+#face{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+#face .mood{display:none}
+#face[data-mood="awake"] .awake,#face[data-mood="sleep"] .sleep,#face[data-mood="caught"] .caught{display:inline}
+.zzz{left:96px;bottom:104px}
+.pop{white-space:nowrap}
+.scene{container-type:size}
+.window{top:max(34px,calc(64% - 222px))}
+.poster{top:max(42px,calc(64% - 214px))}
+.lights{position:absolute;left:6px;right:6px;top:4px;height:16px;border-bottom:2px solid #4a3f8f;border-radius:0 0 50% 50%/0 0 14px 14px;background:radial-gradient(circle at 10px 13px,#ffd45c 3px,transparent 4px) 0 0/32px 16px repeat-x,radial-gradient(circle at 26px 13px,#ff8fb1 3px,transparent 4px) 0 0/32px 16px repeat-x;filter:drop-shadow(0 0 4px rgba(255,212,92,.7))}
+.moonlight{position:absolute;left:78px;top:calc(max(34px,calc(64% - 222px)) + 70px);width:88px;height:90px;background:linear-gradient(rgba(150,170,255,.2),transparent);clip-path:polygon(8% 0,92% 0,120% 100%,-20% 100%);pointer-events:none}
+.plant{position:absolute;right:112px;bottom:36%;font-size:30px;line-height:1}
+.chair{position:absolute;left:146px;bottom:calc(36% - 12px);font-size:34px;line-height:1;z-index:1}
+.bshelf,.polas,.frame2,.clock{display:none}
+@container (min-width:400px){
+  .bshelf{--bk:linear-gradient(90deg,#d96a6a 0 10px,#6ab0d9 10px 18px,#e8c15a 18px 30px,#7fcf8a 30px 38px,#b58be0 38px 50px,#d96a6a 50px 58px);display:block;position:absolute;left:212px;bottom:36%;width:66px;height:128px;border:3px solid #2e1f17;border-radius:4px 4px 0 0;background:var(--bk) 0 14px/58px 24px no-repeat,var(--bk) 0 55px/58px 24px no-repeat,var(--bk) 0 96px/58px 24px no-repeat,repeating-linear-gradient(#4a3326 0 38px,#2e1f17 38px 41px)}
+}
+@container (min-height:430px){
+  .polas{display:flex;position:absolute;left:96px;top:20px;gap:18px}
+  .polas i{width:20px;height:26px;background:#f4f0ff;border:2px solid #cfc7f3;box-shadow:inset 0 -7px #cfc7f3;transform:rotate(-4deg)}
+  .polas i:nth-child(2){transform:rotate(3deg)}
+  .clock{display:block;position:absolute;right:46px;top:calc(64% - 212px);font-size:30px;line-height:1}
+  .frame2{display:flex;align-items:center;justify-content:center;position:absolute;left:14px;bottom:calc(36% + 166px);width:50px;height:46px;border:3px solid #5b4aa8;border-radius:3px;background:linear-gradient(#1c1a50,#3a2d73);font-size:22px}
+}
+#face .phone{transition:transform .3s ease,opacity .25s}
+#face:not([data-mood="awake"]) .phone{transform:translate(8px,30px);opacity:0}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="hud"><div><small>점수</small><span id="score">0</span></div><div><small>남은 시간</small><span id="time">60</span></div></div>
+  <div class="bars">
+    <div class="bar"><i id="tbar"></i></div>
+    <div class="bar" id="react"><i id="rbar"></i></div>
+  </div>
+  <div class="scene" id="scene">
+    <div class="window"></div>
+    <div class="poster">⭐</div>
+    <div class="lights"></div><div class="moonlight"></div>
+    <div class="clock">🕐</div>
+    <div class="bshelf"></div><div class="plant">🪴</div><div class="chair">🪑</div>
+    <div class="wardrobe"></div>
+    <div class="desk"></div><div class="lamp">💡</div><div class="books">📚</div><div class="laptop">💻</div>
+    <div class="floor"></div>
+    <div class="door"></div><div class="spill"></div>
+    <div class="mom">👩</div>
+    <div class="bubble" id="bubble">쿵쿵…</div>
+    <div class="bed">
+      <svg id="face" data-mood="awake" viewBox="0 0 320 130" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+        <defs>
+          <path id="bl" d="M62 88 C62 76 74 73 84 72 C94 64 112 62 126 68 C140 72 150 76 164 72 C174 62 196 58 214 62 C228 52 252 52 262 64 C268 70 272 70 278 66 C290 56 308 62 314 80 L314 114 L62 114 Z"/>
+          <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="8" cy="8" r="1.6" fill="#fff" opacity=".22"/></pattern>
+        </defs>
+        <rect x="0" y="36" width="14" height="92" rx="6" fill="#4a3326"/>
+        <rect x="0" y="102" width="320" height="26" rx="8" fill="#3b2a1f"/>
+        <rect x="8" y="88" width="312" height="20" rx="8" fill="#cfc7f3"/>
+        <rect x="16" y="62" width="88" height="36" rx="18" fill="#efeaff" stroke="#cfc7f3" stroke-width="2"/>
+        <circle cx="35" cy="70" r="4.5" fill="#eeb98c"/>
+        <circle cx="58" cy="66" r="24" fill="#f6c9a0"/>
+        <ellipse cx="46" cy="77" rx="4" ry="2.5" fill="#ff9aa8" opacity=".5"/><ellipse cx="70" cy="77" rx="4" ry="2.5" fill="#ff9aa8" opacity=".5"/>
+        <path d="M33 66 C30 44 48 36 62 38 C79 40 86 54 83 66 C77 57 70 52 58 52 C47 52 38 57 33 66 Z" fill="#2a1d40"/>
+        <g class="mood awake" stroke="#2a1d40" stroke-width="2" stroke-linecap="round" fill="none">
+          <path d="M43 60 l9 -2"/><path d="M63 58 l9 2"/>
+          <ellipse cx="49" cy="67" rx="5.5" ry="6" fill="#fff" stroke="#d9a77a" stroke-width="1"/><ellipse cx="68" cy="67" rx="5.5" ry="6" fill="#fff" stroke="#d9a77a" stroke-width="1"/>
+          <circle cx="51.5" cy="68" r="3" fill="#2a1d40" stroke="none"/><circle cx="70.5" cy="68" r="3" fill="#2a1d40" stroke="none"/>
+          <path d="M53 81 q5 2 10 0"/>
+        </g>
+        <g class="mood sleep" stroke="#2a1d40" stroke-width="2.2" stroke-linecap="round" fill="none">
+          <path d="M43 67 q6 6 12 0"/><path d="M62 67 q6 6 12 0"/><path d="M54 80 q4 3 8 0"/>
+        </g>
+        <g class="mood caught" stroke="#2a1d40" stroke-width="2" stroke-linecap="round" fill="none">
+          <path d="M42 55 l10 -3"/><path d="M64 52 l10 3"/>
+          <ellipse cx="49" cy="66" rx="7" ry="8" fill="#fff" stroke="#d9a77a" stroke-width="1"/><ellipse cx="68" cy="66" rx="7" ry="8" fill="#fff" stroke="#d9a77a" stroke-width="1"/>
+          <circle cx="49" cy="66" r="1.8" fill="#2a1d40" stroke="none"/><circle cx="68" cy="66" r="1.8" fill="#2a1d40" stroke="none"/>
+          <ellipse cx="58" cy="82" rx="4.5" ry="6" fill="#7a2a3a" stroke="none"/>
+        </g>
+        <use href="#bl" fill="#5b4aa8"/>
+        <use href="#bl" fill="url(#dots)"/>
+        <use href="#bl" fill="none" stroke="#43368a" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M62 90 C62 77 74 74 84 73 C96 66 110 64 120 68 L122 82 C102 82 80 86 62 96 Z" fill="#efeaff" stroke="#cfc7f3" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M134 76 C136 90 134 102 132 112 M192 64 C194 84 192 100 190 112 M246 58 C248 80 246 100 244 112" stroke="#7a68cf" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".7"/>
+        <g class="phone">
+          <circle cx="98" cy="60" r="24" fill="#8fd0ff" opacity=".16"/>
+          <rect x="92" y="48" width="17" height="28" rx="3.5" fill="#1b1b2e" stroke="#9aa0b8" stroke-width="1.5"/>
+          <rect x="94.5" y="51" width="12" height="21" rx="1.5" fill="#9fdcff"/>
+          <rect x="94.5" y="51" width="12" height="5" fill="#fff" opacity=".35"/>
+        </g>
+        <ellipse cx="100" cy="75" rx="11" ry="7.5" fill="#f6c9a0" stroke="#d9a77a" stroke-width="1.5"/>
+        <path d="M94 71 v6 M100 69 v7 M106 71 v6" stroke="#d9a77a" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <div class="zzz">Zzz</div>
+    </div>
+    <div class="pop" id="pop">+10</div>
+  </div>
+  <button id="btn" type="button">😴 자는 척!</button>
+
+  <div class="overlay" id="start">
+    <h1>엄마 온다!</h1>
+    <p>엄마 발소리가 들리면 제한 시간 안에 <b>자는 척</b> 버튼을 눌러 1분 동안 들키지 않고 버티세요. 엄마는 언제 올지 몰라요! 빨리 누를수록 점수가 높아요.</p>
+    <p>조작: 버튼 터치 · 마우스 클릭 · 스페이스바</p>
+    <button class="cta" id="go" type="button">시작하기</button>
+  </div>
+  <div class="overlay hide" id="end">
+    <h2 id="etitle"></h2>
+    <div class="grade" id="grade"></div>
+    <div class="big">점수 <span id="escore">0</span>점</div>
+    <p>최고 점수 <span id="best">0</span>점</p>
+    <p id="hint"></p>
+    <button class="cta" id="again" type="button">다시 하기</button>
+  </div>
+</div>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var scene=$('scene'),faceEl=$('face'),face={set textContent(v){faceEl.setAttribute('data-mood',v==='😴'?'sleep':v==='😱'?'caught':'awake');}},scoreEl=$('score'),timeEl=$('time'),tbar=$('tbar'),rbar=$('rbar'),react=$('react'),pop=$('pop'),bubble=$('bubble');
+  var TOTAL=60000, state='idle', t0=0, score=0, sig=null, nextAt=0, sleepUntil=0, lockUntil=0, lastRaf=0;
+  function phase(ms){ return ms<20000?{gap:10000,lim:700}:ms<40000?{gap:7000,lim:550}:{gap:5000,lim:400}; }
+  function getBest(){ try{return parseInt(localStorage.getItem('momcome-best'),10)||0}catch(e){return 0} }
+  function setBest(v){ try{localStorage.setItem('momcome-best',String(v))}catch(e){} }
+
+  var sched=[],idx=0;
+  function makeSched(){
+    var t=3000+Math.random()*3000,w=[],s=0,i,x;
+    sched=[t];
+    for(i=0;i<14;i++){x=(1.6-i*0.07)*(0.3+Math.random());w.push(x);s+=x;}
+    var free=56500-t-14*2200;
+    for(i=0;i<14;i++){t+=2200+free*w[i]/s;sched.push(t);}
+  }
+  function start(){
+    score=0; sig=null; state='play'; t0=performance.now(); makeSched(); idx=0; nextAt=sched[0]; sleepUntil=0;
+    scoreEl.textContent='0'; scene.className='scene'; face.textContent='😑'; bubble.textContent='쿵쿵…';
+    $('start').classList.add('hide'); $('end').classList.add('hide');
+    lockUntil=performance.now()+250;
+    cancelAnimationFrame(lastRaf); lastRaf=requestAnimationFrame(loop);
+  }
+  function press(){
+    var now=performance.now();
+    if(state!=='play'||now<lockUntil) return;
+    face.textContent='😴'; sleepUntil=now+700;
+    var wrap=scene.parentNode; scene.classList.remove('sleeping'); void scene.offsetWidth; scene.classList.add('sleeping');
+    if(sig && now-sig.at<=sig.lim){
+      var rt=now-sig.at,pt=rt<300?10:rt<400?7:rt<550?5:3; score+=pt; pop.textContent='+'+pt+(pt===10?' 완벽!':pt===3?' 아슬아슬!':''); scoreEl.textContent=score; sig=null;
+      scene.classList.remove('alert'); react.classList.remove('on');
+      pop.classList.remove('show'); void pop.offsetWidth; pop.classList.add('show');
+    }
+  }
+  function finish(clear){
+    state='over'; sig=null; react.classList.remove('on');
+    var best=getBest(); if(score>best){best=score;setBest(best)}
+    var g=(clear&&score>=135)?'연기력 S':score>=110?'연기력 A+':score>=75?'연기력 B':score>=38?'연기력 C':'발연기 탈락';
+    $('etitle').textContent=clear?'1분 버티기 성공!':'엄마에게 들켰다!';
+    $('grade').textContent=g; $('escore').textContent=score; $('best').textContent=best;
+    $('hint').textContent=g==='연기력 S'?'완벽한 연기였어요. 최고 기록에 도전해 보세요!':'다음엔 S등급!';
+    var delay=clear?300:900;
+    setTimeout(function(){ if(state==='over'){ $('end').classList.remove('hide'); lockUntil=performance.now()+300; } },delay);
+  }
+  function loop(now){
+    if(state!=='play') return;
+    var el=now-t0;
+    if(el>=TOTAL){ scene.classList.remove('alert'); finish(true); return; }
+    timeEl.textContent=Math.ceil((TOTAL-el)/1000);
+    tbar.style.transform='scaleX('+(1-el/TOTAL)+')';
+    if(!sig && el>=nextAt){
+      var p=phase(el); sig={at:now,lim:p.lim}; idx++; nextAt=idx<sched.length?sched[idx]:Infinity;
+      scene.classList.add('alert'); react.classList.add('on'); face.textContent='😑';
+    }
+    if(sig){
+      var left=1-(now-sig.at)/sig.lim; rbar.style.transform='scaleX('+Math.max(0,left)+')';
+      if(left<=0){
+        scene.classList.remove('alert'); scene.classList.add('caught'); face.textContent='😱'; bubble.textContent='야!!';
+        finish(false); return;
+      }
+    }
+    if(sleepUntil && now>sleepUntil){ sleepUntil=0; if(!sig) face.textContent='😑'; }
+    lastRaf=requestAnimationFrame(loop);
+  }
+  var btn=$('btn');
+  btn.addEventListener('pointerdown',function(e){e.preventDefault();press();});
+  btn.addEventListener('click',function(e){e.preventDefault();});
+  scene.addEventListener('pointerdown',function(e){e.preventDefault();press();});
+  function startClick(){ if(performance.now()>=lockUntil){ this.blur(); start(); } }
+  $('go').addEventListener('click',startClick);
+  $('again').addEventListener('click',startClick);
+  document.addEventListener('keydown',function(e){
+    if(e.code!=='Space'&&e.code!=='Enter') return;
+    e.preventDefault(); if(e.repeat) return;
+    if(state==='play') press();
+    else if(performance.now()>=lockUntil && (state==='idle' || !$('end').classList.contains('hide'))) start();
+  });
+  document.addEventListener('keyup',function(e){ if(e.code==='Space') e.preventDefault(); });
+})();
+</script>
+</body>
+</html>
